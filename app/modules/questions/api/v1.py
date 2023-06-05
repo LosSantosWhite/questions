@@ -11,7 +11,4 @@ router = APIRouter(prefix="/questions", tags=["questions"])
 async def questions_request(
     count: int, questions: QuestionServices = Depends(get_questions_services)
 ):
-    last_record = questions.last_record
-    ...
-
-    return last_record
+    return await questions.reqeust_questions(count)

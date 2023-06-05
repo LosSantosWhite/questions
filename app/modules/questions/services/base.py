@@ -32,7 +32,8 @@ class QuestionServices:
         for schema in schemas_list:
             self.last_record = await self.create(schema)
 
-    async def reqeust_questions(self, count: int):
+    async def reqeust_questions(self, count: int) -> dict:
+        result = self.last_record
         questions = await request_questions(count)
         count_errors = 0
         try:
@@ -42,3 +43,4 @@ class QuestionServices:
 
         if count_errors:
             await self.reqeust_questions(count_errors)
+        return result
