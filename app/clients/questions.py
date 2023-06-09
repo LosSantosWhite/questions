@@ -17,7 +17,7 @@ async def request_questions(count: int) -> list[dict]:
             )
             for question in questions
         ]
-        return questions
+        return result
 
 
 if __name__ == "__main__":

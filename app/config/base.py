@@ -1,4 +1,4 @@
-from pydantic import BaseSettings, PostgresDsn
+from pydantic import BaseSettings, PostgresDsn, RedisDsn
 
 
 ENV_FILE_PATH = ".env"
@@ -16,7 +16,8 @@ class PostgreSQL(BaseSettings):
     __separator = "://"
 
     class Config:
-        env_file = ENV_FILE_PATH
+        env_file: str = ENV_FILE_PATH
+        env_prefix: str = "POSTGRESQL"
 
     dsn: PostgresDsn = "postgres://user:password@127.0.0.1:5432/db"
 
@@ -30,10 +31,19 @@ class PostgreSQL(BaseSettings):
         return self.build_using_new_scheme("postgresql+asyncpg")
 
 
+class Redis(BaseSettings):
+    class Config:
+        env_file: str = ENV_FILE_PATH
+        env_prefix: str = "REDIS_"
+
+    dsn: RedisDsn = "redis://username:password@localhost:6379/0"
+
+
 class Config(BaseSettings):
     app: AppSettings
     postgresql: PostgreSQL
+    redis: Redis
 
     @classmethod
     def create(cls):
-        return Config(app=AppSettings(), postgresql=PostgreSQL())
+        return Config(app=AppSettings(), postgresql=PostgreSQL(), redis=Redis())

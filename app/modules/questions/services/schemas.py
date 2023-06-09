@@ -3,8 +3,11 @@ from pydantic import BaseModel
 
 
 class QuestionBase(BaseModel):
-    id: int = ""
-    question_id: int = ""
-    text: str = ""
-    answer: str = ""
-    created_at: datetime = datetime.utcnow()
+    question_id: int | None
+    text: str | None
+    answer: str | None
+    created_at: datetime | None
+
+
+class QuestionCreate(QuestionBase):
+    ...
