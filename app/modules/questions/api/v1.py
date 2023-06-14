@@ -11,4 +11,4 @@ router = APIRouter(prefix="/questions", tags=["questions"])
 async def questions_request(
     count: int, questions: QuestionServices = Depends(get_questions_services)
 ):
-    return await questions.main(count)
+    return await questions.insert_questions(count)

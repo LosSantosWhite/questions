@@ -1,9 +1,4 @@
-import asyncio
-
-from datetime import datetime
-from functools import wraps
-
-from redis import Redis
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.postgresql.decorators import transaction
@@ -37,21 +32,44 @@ class QuestionServices:
             await self.create(schema)
 
     # [Redis]
+    async def insert_question_id(self, question_id: str):
+        await self.redis_client.set(question_id, 1)
+
+    async def check_question_id(self, question_id: int | str) -> bool:
+        return str(question_id).encode() in await self.redis_client.keys()
+
+    async def set_last_record(self, value: dict):
+        return await self.redis_client.hmset("last_record", value)
+
+    async def get_last_record(self) -> dict[str, int | str]:
+        values = await self.redis_client.hmget(
+            "last_record", keys=["question_id", "text", "answer", "created_at"]
+        )
+        return dict(
+            question_id=values[0],
+            text=values[1],
+            answer=values[2],
+            created_at=values[3],
+        )
+
+    # [PostgreSQL + Redis]
     @redis_session
-    async def main(self, count: int, *args, **kwargs) -> dict:
+    async def insert_questions(self, count: int, *args, **kwargs) -> dict:
         questions_list: list[dict] = await request_questions(count)
         duplicates: int = 0
-        last_record = self.redis_client.get_last_record()
+        last_record = await self.get_last_record()
 
         for question in questions_list:
-            if not self.redis_client.check_id(question):
-                q = await self.create(schema=QuestionCreate(**question))
-                print(q)
-                self.redis_client.append_question_id(question["question_id"])
-                self.redis_client.set_last_record(question)
+            if not await self.check_question_id(question["question_id"]):
+                try:
+                    q = await self.create(schema=QuestionCreate(**question))
+                except Exception:
+                    duplicate += 1
+                print(f"{q=}")
+                await self.insert_question_id(question["question_id"])
+                await self.set_last_record(question)
             else:
                 duplicates += 1
         if duplicates:
-            await self.main(duplicates, *args, **kwargs)
-        print(f"{last_record=}")
+            await self.insert_questions(duplicates, *args, **kwargs)
         return last_record
