@@ -20,7 +20,7 @@ class CRUD(Generic[Table]):
     async def insert(self, data: dict, **kwargs) -> Table:
         instance = self.table(**data, **kwargs)
 
-        await self.session.add(instance=instance)
+        self.session.add(instance=instance)
         await self.session.flush()
         await self.session.refresh(instance=instance)
 
