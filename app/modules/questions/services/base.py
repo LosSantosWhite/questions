@@ -67,11 +67,3 @@ class QuestionServices:
                 await self.insert_questions(duplicates, *args, **kwargs)
             await self.session.commit()
             return last_record
-
-    async def select_ids(self):
-        return await self.session.execute(Question.id).mappings().all()
-
-    async def startup_insert_questions_id_in_redis(self):
-        for _id in await self.select_ids():
-            print(_id)
-            await self.insert_question_id(_id)
