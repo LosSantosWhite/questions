@@ -1,4 +1,4 @@
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from functools import wraps
 
 
@@ -10,7 +10,7 @@ def redis_session(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
         self: "QuestionServices" = args[0]
-        async with self.redis_client.pipeline() as pipeline:
+        async with self.redis_client.pipeline():
             result = await func(*args, **kwargs)
             return result
 

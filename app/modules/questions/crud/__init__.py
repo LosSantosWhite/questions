@@ -1,1 +1,1 @@
-from .base import QuestionCRUD, QuestionRedisCRUD
+from .base import QuestionCRUD

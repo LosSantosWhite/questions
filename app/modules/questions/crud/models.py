@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import String
+from sqlalchemy import String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.postgresql.base import Base
@@ -13,7 +13,9 @@ class Question(Base):
     question_id: Mapped[int] = mapped_column(unique=True)
     text: Mapped[str] = mapped_column(String())
     answer: Mapped[str] = mapped_column(String())
-    created_at: Mapped[datetime] = mapped_column()
+    created_at: Mapped[datetime] = mapped_column(DateTime)
 
     def __repr__(self):
-        f"<Question(id={self.id}, text={self.text[:10]}..., answer={self.answer})>"
+        return (
+            f"<Question(id={self.id}, text={self.text[:10]}..., answer={self.answer})>"
+        )

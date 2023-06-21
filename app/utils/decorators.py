@@ -8,7 +8,7 @@ def duplicate(detail: str = None):
     def constructor(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
+            result = await func(*args, **kwargs)
             return result
 
         return wrapper

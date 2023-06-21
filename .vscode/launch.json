@@ -5,11 +5,14 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: Module",
+      "name": "Python: FastAPI",
       "type": "python",
       "request": "launch",
       "module": "uvicorn",
-      "args": ["python3", "-m", "app.entrypoints"]
+      "cwd": "${workspaceFolder}/",
+      "args": ["debp:app", "--reload"],
+      "jinja": true,
+      "justMyCode": true
     }
   ]
 }

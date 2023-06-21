@@ -1,3 +1,5 @@
+import asyncio
+
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -5,7 +7,7 @@ from app.database.postgresql.decorators import transaction
 from app.database.redis.decorators import redis_session
 
 from app.clients.questions import request_questions
-from app.modules.questions.crud import QuestionCRUD, QuestionRedisCRUD
+from app.modules.questions.crud import QuestionCRUD
 from app.modules.questions.crud.models import Question
 from app.modules.questions.services.schemas import QuestionCreate
 
@@ -16,20 +18,13 @@ class QuestionServices:
     def __init__(self, session: AsyncSession, redis_client: Redis):
         self.session = session
         self.questions = QuestionCRUD(session=self.session)
-        self.redis_client = QuestionRedisCRUD()
+        self.redis_client = redis_client
 
     # [PostgreSQL]
     @transaction
     @duplicate(detail="This question already exists")
     async def create(self, schema: QuestionCreate, _commit: bool = True) -> Question:
         return await self.questions.insert(data=schema.dict())
-
-    @transaction
-    async def bulk_create(
-        self, schemas_list: list[QuestionCreate], _commit: bool = True
-    ):
-        for schema in schemas_list:
-            await self.create(schema)
 
     # [Redis]
     async def insert_question_id(self, question_id: str):
@@ -53,26 +48,30 @@ class QuestionServices:
         )
 
     # [PostgreSQL + Redis]
-    # @redis_session
-    # @transaction
     async def insert_questions(self, count: int, *args, **kwargs) -> dict:
-        questions_list: list[dict] = await request_questions(count)
-        duplicates: int = 0
-        last_record: dict[str, int | str] = await self.get_last_record()
         async with self.redis_client.pipeline():
+            questions_list: list[dict] = await request_questions(count)
+            duplicates: int = 0
+            last_record: dict[str, int | str] = await self.get_last_record()
+
             for question in questions_list:
                 if not await self.check_question_id(question["question_id"]):
-                    try:
-                        q = await self.create(
-                            schema=QuestionCreate(**question), _commit=False
-                        )
-                    except Exception:
-                        duplicate += 1
-                    print(f"{q=}")
+                    await asyncio.create_task(
+                        self.create(schema=QuestionCreate(**question))
+                    )
                     await self.insert_question_id(question["question_id"])
                     await self.set_last_record(question)
                 else:
                     duplicates += 1
             if duplicates:
                 await self.insert_questions(duplicates, *args, **kwargs)
+            await self.session.commit()
             return last_record
+
+    async def select_ids(self):
+        return await self.session.execute(Question.id).mappings().all()
+
+    async def startup_insert_questions_id_in_redis(self):
+        for _id in await self.select_ids():
+            print(_id)
+            await self.insert_question_id(_id)

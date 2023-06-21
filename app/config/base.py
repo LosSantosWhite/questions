@@ -17,7 +17,7 @@ class PostgreSQL(BaseSettings):
 
     class Config:
         env_file: str = ENV_FILE_PATH
-        env_prefix: str = "POSTGRESQL"
+        env_prefix: str = "POSTGRESQL_"
 
     dsn: PostgresDsn = "postgres://user:password@127.0.0.1:5432/db"
 
@@ -28,7 +28,8 @@ class PostgreSQL(BaseSettings):
 
     @property
     def using_async_driver(self):
-        return self.build_using_new_scheme("postgresql+asyncpg")
+        scheme = self.build_using_new_scheme("postgresql+asyncpg")
+        return scheme
 
 
 class Redis(BaseSettings):

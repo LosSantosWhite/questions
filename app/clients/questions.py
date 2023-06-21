@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 import json
 import httpx
 
@@ -12,13 +13,11 @@ async def request_questions(count: int) -> list[dict]:
             dict(
                 question_id=question["id"],
                 text=question["question"],
-                created_at=question["created_at"],
+                created_at=datetime.strptime(
+                    question["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ"
+                ).strftime("%Y-%m-%d %H:%M:%S.%f"),
                 answer=question["answer"],
             )
             for question in questions
         ]
         return result
-
-
-if __name__ == "__main__":
-    print(asyncio.run(request_questions(3)))
